@@ -7,6 +7,125 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
 
+
+const parseJSON = (xhr, content) => {
+      //parse response (obj will be empty in a 204 updated)
+    if(xhr.response){
+      const obj = JSON.parse(xhr.response);
+      console.dir(obj);
+      
+      //if message in response, add to screen
+      if(obj.message) {
+        const p = document.createElement('p');
+        p.textContent = `Message: ${obj.message}`;
+        content.appendChild(p);
+      }
+      
+      //if users in response, add to screen
+      if(obj.users) {
+        const userList = document.createElement('p');
+        const users = JSON.stringify(obj.users);
+        userList.textContent = users;
+        content.appendChild(userList);
+      }
+    }
+
+    };
+
+//function to handle our xhr response
+    const handleResponse = (xhr) => { 
+      //grab the content section
+      const content = document.querySelector("#content");
+        
+        switch(xhr.status) {
+        case 200: //if success
+          content.innerHTML = `<b>Success</b>`;
+          break;
+        case 400: //if bad request
+          content.innerHTML = `<b>Bad Request</b>`;
+          break;
+        case 204:
+          content.innerHTML = `<b>Updated (No Content)</b>`;
+          break;
+        case 201:
+          content.innerHTML = `<b>Create</b>`;
+          break;
+        default: //any other status
+          content.innerHTML = `<b>Resource Not Found</b>`;
+          break;
+      }
+        //parse the object and print it
+        if(xhr.status !== 204){
+           parseJSON(xhr, content); 
+        }
+
+        
+    };
+    
+    //function to send ajax
+    const sendAjax = (e,userForm) => {
+        
+        const url = userForm.querySelector('#urlField').value;
+      //grab method selected
+      const method = userForm.querySelector('#methodSelect').value;
+
+      const xhr = new XMLHttpRequest();
+
+      xhr.open(method, url);
+
+      xhr.setRequestHeader ("Accept", 'application/json');
+
+      if(method == 'get') {
+        xhr.onload = () => handleResponse(xhr, true);
+      } else {
+        xhr.onload = () => handleResponse(xhr, false);
+      }
+
+      xhr.send();
+              
+      e.preventDefault();
+      return false;
+    };
+
+    const sendPost = (e, nameForm) => {
+
+      const nameAction = nameForm.getAttribute('action');
+      const nameMethod = nameForm.getAttribute('method');
+      
+      const nameField = nameForm.querySelector('#nameField');
+      const ageField = nameForm.querySelector('#ageField');
+      
+      const xhr = new XMLHttpRequest();
+      xhr.open(nameMethod, nameAction);
+
+      xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+      xhr.setRequestHeader ('Accept', 'application/json');
+      
+      xhr.onload = () => handleResponse(xhr);
+      
+      const formData = `name=${nameField.value}&age=${ageField.value}`;
+      
+      xhr.send(formData);
+    
+      e.preventDefault();
+      return false;
+    };
+
+    //initialization function
+    const init = () => {
+        
+        const userForm = document.querySelector('#userForm');
+        const nameForm = document.querySelector('#nameForm');
+        
+        const sendRequestGET = (e) => sendAjax(e,userForm);
+        
+        const sendRequestPOST = (e) => sendPost(e,nameForm);
+        
+        userForm.addEventListener('submit', sendRequestGET);
+        nameForm.addEventListener('submit', sendRequestPOST);
+    };
+
+    window.onload = init;
   </script>
 </head>
 <body>
